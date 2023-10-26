@@ -1,7 +1,7 @@
 /**fsm.sv
 *@info fsm
 *
-*@brief Asimple fsm with the purpose of using it for formal verification training
+*@brief A simple fsm with the purpose of using it for formal verification training
 *
 *@details The fsm stage trasision follows the array bellow
 *
