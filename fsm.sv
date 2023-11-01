@@ -25,9 +25,6 @@ module  fsm(
   output c_state state
 );
 
-
-
-
   always_ff @(posedge clk, posedge reset ) begin
   if(reset)begin
       state <= start;
