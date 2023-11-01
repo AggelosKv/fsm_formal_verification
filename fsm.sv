@@ -14,20 +14,20 @@
 *
 * Output --> start: out = 00 , odd: out = 01 , even: out = 10 , fin: out = 11
 */
+import fsm_stages_pkg::*; //fsm stages imported from package for easier verification 
 
 module  fsm(
   input  logic clk,
   input  logic reset,
   input  logic q1,
   input  logic q2,
-  output logic [1:0] count
+  output logic [1:0] count,
+  output c_state state
 );
 
-  
-  typedef enum logic[1:0] { start = 2'b00, odd = 2'b01, even = 2'b10, fin = 2'b11 } c_state;
-  c_state state;
-  
-  
+
+
+
   always_ff @(posedge clk, posedge reset ) begin
   if(reset)begin
       state <= start;

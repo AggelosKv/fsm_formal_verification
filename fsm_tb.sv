@@ -1,13 +1,16 @@
 module fsm_tb;
 
+import fsm_stages_pkg::*;
 
 logic clk,reset,q1,q2;
 logic [1:0] count;
 int successful_count;
+c_state state;
 
-fsm fsm1 (.clk(clk), .reset(reset), .q1(q1), .q2(q2), .count(count) ); // fsm instantiation
 
-bind fsm : fsm1 fsm_assertions sva ( .clk(clk), .reset(reset), .q1(q1), .q2(q2), .count(count)); 
+fsm fsm1 (.clk(clk), .reset(reset), .q1(q1), .q2(q2), .count(count) , .state(state)); // fsm instantiation
+
+bind fsm : fsm1 fsm_assertions sva (.clk(clk), .reset(reset), .q1(q1), .q2(q2), .count(count) , .state(state)); 
 // bind fsm instantiation with the assetions module : fsm_assertions
 
 //generate clock signal

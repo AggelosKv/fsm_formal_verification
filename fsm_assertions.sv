@@ -3,13 +3,53 @@
 *
 *@brief this is the module that contain all the concurrent assertions for verification 
 */
+
+
+//*******************//
+// Macro Definitions //
+//*******************//
+
+  `define assertion_check(signal, clock = clk, reset_signal = reset, dis = 0, body)\
+  property  check_``signal``_assertion; \
+    @(posedge clock) \
+    disable iff (reset_signal || dis) \
+    body;\
+  endproperty \
+  assert property (check_``signal``_assertion);
+
+
+//******************//
+// Type Definitions //
+//******************//
+
+import fsm_stages_pkg::*; //import the fsm stages from package for easier verification
+
+
 module fsm_assertions(
   input logic clk,
   input logic reset,
   input logic q1,
   input logic q2,
-  input logic [1:0] count
+  input logic [1:0] count,
+  input c_state state
 );
+
+
+
+//covergroup
+
+  covergroup cvr_counter @(clk  iff !reset);
+    option.per_instance = 1;
+
+
+    count_cp  : coverpoint count {
+      bins start = {2'b00};
+      bins odd   = {2'b01};
+      bins even  = {2'b10}; 
+      bins fin   = {2'b11};    
+    }
+
+  endgroup
 
 //**********************************************************//
 //                                                          //
@@ -18,87 +58,37 @@ module fsm_assertions(
 //**********************************************************//
 
 //reset
-  property reset_fsm;
-      reset |-> (count == 2'b00);
-  endproperty
-
-  reset_fsm_Assertion     : assert property (@(posedge clk) reset_fsm );
+  `assertion_check(reset_fsm,,0,, reset |-> (count == 2'b00));
 
 //start
-  property start_to_odd;
-      (( count == 2'b00 ) && $rose(!q1 && q2 )) |=> count == 2'b01;
-  endproperty
-  
-  start_to_odd_assertion : assert property (@(posedge clk) disable iff (reset) start_to_odd);
 
-
-  property start_to_start;
-      (( count == 2'b00 ) && (!(!q1 && q2 ))) |=> count == 2'b00;
-  endproperty
+  `assertion_check(start_to_odd,,,, ( state == start ) && $rose(!q1 && q2 ) |=> state == odd );  //$rose is there to resolve an assertion error for a case when reset==1 and the property is true for 2 cycles
   
-  start_to_start_assertion : assert property (@(posedge clk) disable iff (reset) start_to_start);
+  `assertion_check(start_to_start,,,, ( state == start ) && (!(!q1 && q2 )) |=> state == start );
 
 //odd
-  property odd_to_even;
-      (( count == 2'b01 ) && $rose(q1 && !q2 )) |=> count == 2'b10;
-  endproperty
-  
-  odd_to_even_assertion : assert property (@(posedge clk) disable iff (reset) odd_to_even);
 
+  `assertion_check(odd_to_even,,,, ( state == odd ) && (q1 && !q2 ) |=> state == even );
 
-  property odd_to_start;
-      (( count == 2'b01 ) && (q1 ~^ q2 )) |=> count == 2'b00;
-  endproperty
-  
-  odd_to_start_assertion : assert property (@(posedge clk) disable iff (reset) odd_to_start);
+  `assertion_check(odd_to_start,,,, ( state == odd ) && (q1 ~^ q2 ) |=> state == start );
 
-
-  property odd_to_odd;
-      (( count == 2'b01 ) && (!q1 && q2)) |=> count == 2'b01;
-  endproperty
-  
-  odd_to_odd_assertion : assert property (@(posedge clk) disable iff (reset) odd_to_odd);
+  `assertion_check(odd_to_odd,,,, ( state == odd ) && (!q1 && q2) |=> state == odd );
 
 //even
-  property even_to_fin;
-      (( count == 2'b10 ) && (q1 && q2)) |=> count == 2'b11;
-  endproperty
   
-  even_to_fin_assertion : assert property (@(posedge clk) disable iff (reset) even_to_fin);
-
-
-  property even_to_start;
-      (( count == 2'b10 ) && (!q2)) |=> count == 2'b00;
-  endproperty
+  `assertion_check(even_to_fin,,,, ( state == even ) && (q1 && q2) |=> state == fin );
   
-  even_to_start_assertion : assert property (@(posedge clk) disable iff (reset) even_to_start);
-
-
-  property even_to_odd;
-      (( count == 2'b10 ) && (!q1 && q2)) |=> count == 2'b01;
-  endproperty
+  `assertion_check(even_to_start,,,, ( state == even ) && ((!q2)) |=> state == start );
   
-  even_to_odd_assertion : assert property (@(posedge clk) disable iff (reset) even_to_odd);
+  `assertion_check(even_to_odd,,,, ( state == even ) && ((!q1 && q2)) |=> state == odd );
 
-//fin
-  property fin_to_fin;
-      (( count == 2'b11 ) && (q1 && q2)) |=> count == 2'b11;
-  endproperty
-  
-  fin_to_fin_assertion : assert property (@(posedge clk) disable iff (reset) fin_to_fin);
+//fin   
 
+  `assertion_check(fin_to_fin,,,, (( state == fin ) && (q1 && q2)) |=> state == fin );
 
-  property fin_to_start;
-      (( count == 2'b11 ) && (!q2)) |=> count == 2'b00;
-  endproperty
-  
-  fin_to_start_assertion : assert property (@(posedge clk) disable iff (reset) fin_to_start);
+  `assertion_check(fin_to_start,,,, (( state == fin ) && (!q2)) |=> state == start );
 
-  property fin_to_odd;
-      (( count == 2'b11 ) && (!q1 && q2)) |=> count == 2'b01;
-  endproperty
-  
-  fin_to_odd_assertion : assert property (@(posedge clk) disable iff (reset) fin_to_odd);
+  `assertion_check(fin_to_odd,,,, (( state == fin ) && (!q1 && q2)) |=> state == odd );   
 
 
 //*********************************************************//
@@ -108,82 +98,33 @@ module fsm_assertions(
 //*********************************************************//
 
 //start
-  property start_from_start;
-       (count == 2'b00 ) && $past(count == 2'b00) && !reset && $past(!reset) |-> $past(!(!q1 && q2) ) ;
-  endproperty
   
-  start_from_start_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) start_from_start);
-
-
-  property start_from_odd;
-       (count == 2'b00 ) && $past(count == 2'b01) && !reset |-> $past(q1 ~^ q2)  ;
-  endproperty
+  `assertion_check(start_from_start,,,, (count == start ) && $past(count == start) && $past(!reset) && !reset|-> $past(!(!q1 && q2) ) );
   
-  start_from_odd_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) start_from_odd);
-
+  `assertion_check(start_from_odd,,,, (count == start ) && $past(count == odd) && !reset |-> $past(q1 ~^ q2) );
   
-  property start_from_even;
-       (count == 2'b00 ) && $past(count == 2'b10) && !reset |-> $past(!q2) ;
-  endproperty
+  `assertion_check(start_from_even,,,, (count == start ) && $past(count == even) && !reset |-> $past(!q2) );
   
-  start_from_even_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) start_from_even);
+  `assertion_check(start_from_fin,,,, (count == start ) && $past(count == fin) && !reset |-> $past(!q2) );
+    
+//odd
 
-  
-  property start_from_fin;
-       (count == 2'b00 ) && $past(count == 2'b11) && !reset |-> $past(!q2) ;
-  endproperty
-  
-  start_from_fin_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) start_from_fin);
+  `assertion_check(odd_from_start,,,, (count == odd ) && $past(count == start) && !reset |-> $past(!q1 && q2) );
 
+  `assertion_check(odd_from_odd,,,, (count == odd ) && $past(count == odd) |-> $past(!q1 && q2) );
 
-  //odd
-    property odd_from_start;
-       (count == 2'b01 ) && $past(count == 2'b00)  |-> $past((!q1 && q2) ) ;
-  endproperty
-  
-  odd_from_start_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) odd_from_start);
+  `assertion_check(odd_from_even,,,, (count == odd ) && $past(count == even) |-> $past(!q1 && q2) );
 
+  `assertion_check(odd_from_fin,,,, (count == odd ) && $past(count == fin) |-> $past(!q1 && q2) );
 
-  property odd_from_odd;
-       (count == 2'b01 ) && $past(count == 2'b01) |-> $past(!q1 && q2)  ;
-  endproperty
-  
-  odd_from_odd_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) odd_from_odd);
+//even
 
-  
-  property odd_from_even;
-       (count == 2'b01 ) && $past(count == 2'b10) |-> $past(!q1 && q2) ;
-  endproperty
-  
-  odd_from_even_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) odd_from_even);
+`assertion_check(even_from_odd,,,, (count == even ) && $past(count == odd) |-> $past(q1 && !q2) );
 
-  
-  property odd_from_fin;
-       (count == 2'b01 ) && $past(count == 2'b11) |-> $past(!q1 && q2) ;
-  endproperty
-  
-  odd_from_fin_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) odd_from_fin);
+//fin
 
+  `assertion_check(fin_from_even,,,, (count == fin ) && $past(count == even) |-> $past(q1 && q2) );
 
-  //even
-  property even_from_odd;
-       (count == 2'b10 ) && $past(count == 2'b01) |-> $past(q1 && !q2) ;
-  endproperty
-  
-  even_from_odd_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) even_from_odd);
-
-  //fin
-  property fin_from_even;
-       (count == 2'b11 ) && $past(count == 2'b10) |-> $past(q1 && q2) ;
-  endproperty
-  
-  fin_from_even_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) fin_from_even);
-
-
-  property fin_from_fin;
-       (count == 2'b11 ) && $past(count == 2'b11) |-> $past(q1 && q2) ;
-  endproperty
-  
-  fin_from_fin_destinetion_assertion : assert property (@(posedge clk) disable iff (reset) fin_from_fin);
+  `assertion_check(fin_from_fin,,,, (count == fin ) && $past(count == fin) |-> $past(q1 && q2) );
 
 endmodule
