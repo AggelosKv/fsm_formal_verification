@@ -58,37 +58,37 @@ module fsm_assertions(
 //**********************************************************//
 
 //reset
-  `assertion_check(reset_fsm,,0,, reset |-> (count == 2'b00));
+  `assertion_check(reset_fsm, reset |-> (count == 2'b00),,0,);
 
 //start
 
-  `assertion_check(start_to_odd, ( state == start ) && $rose(!q1 && q2 ) |=> state == odd );  //$rose is there to resolve an assertion error for a case when reset==1 and the property is true for 2 cycles
+  `assertion_check(start_to_odd, ( state == start ) && $rose(!q1 && q2 ) |=> state == odd ,,,);  //$rose is there to resolve an assertion error for a case when reset==1 and the property is true for 2 cycles
   
-  `assertion_check(start_to_start, ( state == start ) && (!(!q1 && q2 )) |=> state == start );
+  `assertion_check(start_to_start, ( state == start ) && (!(!q1 && q2 )) |=> state == start ,,,);
 
 //odd
 
-  `assertion_check(odd_to_even, ( state == odd ) && (q1 && !q2 ) |=> state == even );
+  `assertion_check(odd_to_even, ( state == odd ) && (q1 && !q2 ) |=> state == even ,,,);
 
-  `assertion_check(odd_to_start, ( state == odd ) && (q1 ~^ q2 ) |=> state == start );
+  `assertion_check(odd_to_start, ( state == odd ) && (q1 ~^ q2 ) |=> state == start ,,,);
 
-  `assertion_check(odd_to_odd, ( state == odd ) && (!q1 && q2) |=> state == odd );
+  `assertion_check(odd_to_odd, ( state == odd ) && (!q1 && q2) |=> state == odd ,,,);
 
 //even
   
-  `assertion_check(even_to_fin, ( state == even ) && (q1 && q2) |=> state == fin );
+  `assertion_check(even_to_fin, ( state == even ) && (q1 && q2) |=> state == fin ,,,);
   
-  `assertion_check(even_to_start, ( state == even ) && ((!q2)) |=> state == start );
+  `assertion_check(even_to_start, ( state == even ) && ((!q2)) |=> state == start ,,,);
   
-  `assertion_check(even_to_odd, ( state == even ) && ((!q1 && q2)) |=> state == odd );
+  `assertion_check(even_to_odd, ( state == even ) && ((!q1 && q2)) |=> state == odd ,,,);
 
 //fin   
 
-  `assertion_check(fin_to_fin, (( state == fin ) && (q1 && q2)) |=> state == fin );
+  `assertion_check(fin_to_fin, (( state == fin ) && (q1 && q2)) |=> state == fin ,,,);
 
-  `assertion_check(fin_to_start, (( state == fin ) && (!q2)) |=> state == start );
+  `assertion_check(fin_to_start, (( state == fin ) && (!q2)) |=> state == start ,,,);
 
-  `assertion_check(fin_to_odd, (( state == fin ) && (!q1 && q2)) |=> state == odd );   
+  `assertion_check(fin_to_odd, (( state == fin ) && (!q1 && q2)) |=> state == odd ,,,);   
 
 
 //*********************************************************//
@@ -99,32 +99,32 @@ module fsm_assertions(
 
 //start
   
-  `assertion_check(start_from_start, (count == start ) && $past(count == start) && $past(!reset) && !reset|-> $past(!(!q1 && q2) ) );
+  `assertion_check(start_from_start, (count == start ) && $past(count == start) && $past(!reset) && !reset|-> $past(!(!q1 && q2) ) ,,,);
   
-  `assertion_check(start_from_odd, (count == start ) && $past(count == odd) && !reset |-> $past(q1 ~^ q2) );
+  `assertion_check(start_from_odd, (count == start ) && $past(count == odd) && !reset |-> $past(q1 ~^ q2) ,,,);
   
-  `assertion_check(start_from_even, (count == start ) && $past(count == even) && !reset |-> $past(!q2) );
+  `assertion_check(start_from_even, (count == start ) && $past(count == even) && !reset |-> $past(!q2) ,,,);
   
-  `assertion_check(start_from_fin, (count == start ) && $past(count == fin) && !reset |-> $past(!q2) );
+  `assertion_check(start_from_fin, (count == start ) && $past(count == fin) && !reset |-> $past(!q2) ,,,);
     
 //odd
 
-  `assertion_check(odd_from_start, (count == odd ) && $past(count == start) && !reset |-> $past(!q1 && q2) );
+  `assertion_check(odd_from_start, (count == odd ) && $past(count == start) && !reset |-> $past(!q1 && q2) ,,,);
 
-  `assertion_check(odd_from_odd, (count == odd ) && $past(count == odd) |-> $past(!q1 && q2) );
+  `assertion_check(odd_from_odd, (count == odd ) && $past(count == odd) |-> $past(!q1 && q2) ,,,);
 
-  `assertion_check(odd_from_even, (count == odd ) && $past(count == even) |-> $past(!q1 && q2) );
+  `assertion_check(odd_from_even, (count == odd ) && $past(count == even) |-> $past(!q1 && q2) ,,,);
 
-  `assertion_check(odd_from_fin, (count == odd ) && $past(count == fin) |-> $past(!q1 && q2) );
+  `assertion_check(odd_from_fin, (count == odd ) && $past(count == fin) |-> $past(!q1 && q2) ,,,);
 
 //even
 
-`assertion_check(even_from_odd, (count == even ) && $past(count == odd) |-> $past(q1 && !q2) );
+`assertion_check(even_from_odd, (count == even ) && $past(count == odd) |-> $past(q1 && !q2) ,,,);
 
 //fin
 
-  `assertion_check(fin_from_even, (count == fin ) && $past(count == even) |-> $past(q1 && q2) );
+  `assertion_check(fin_from_even, (count == fin ) && $past(count == even) |-> $past(q1 && q2) ,,,);
 
-  `assertion_check(fin_from_fin, (count == fin ) && $past(count == fin) |-> $past(q1 && q2) );
+  `assertion_check(fin_from_fin, (count == fin ) && $past(count == fin) |-> $past(q1 && q2) ,,,);
 
 endmodule
