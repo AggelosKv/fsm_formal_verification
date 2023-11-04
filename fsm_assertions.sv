@@ -51,6 +51,7 @@ module fsm_assertions(
 
   endgroup
 
+
 //**********************************************************//
 //                                                          //
 // Checking the transition from one stage to the next stage //
